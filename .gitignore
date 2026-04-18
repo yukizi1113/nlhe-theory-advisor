@@ -1,0 +1,6 @@
+NLHETheoryAdvisor.exe
+*.user
+*.suo
+bin/
+obj/
+*.log
