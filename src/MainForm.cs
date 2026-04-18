@@ -318,27 +318,21 @@ namespace NLHETheoryAdvisor
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
                 Parent = page
             };
-            var split = new SplitContainer
-            {
-                Location = new Point(10, 136),
-                Size = new Size(page.Width - 20, page.Height - 146),
-                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
-                Panel1MinSize = 500,
-                Panel2MinSize = 260,
-                SplitterDistance = Math.Min(560, Math.Max(500, page.Width - 340)),
-                Parent = page
-            };
             _grpPfGrid = new GroupBox
             {
                 Text = "13x13 グリッド",
-                Dock = DockStyle.Fill,
-                Parent = split.Panel1
+                Location = new Point(10, 136),
+                Size = new Size(560, Math.Max(260, page.ClientSize.Height - 146)),
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left,
+                Parent = page
             };
             var grp3 = new GroupBox
             {
                 Text = "選択ハンド詳細",
-                Dock = DockStyle.Fill,
-                Parent = split.Panel2
+                Location = new Point(580, 136),
+                Size = new Size(Math.Max(260, page.ClientSize.Width - 590), Math.Max(260, page.ClientSize.Height - 146)),
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
+                Parent = page
             };
 
             int x1 = 15;
@@ -443,6 +437,17 @@ namespace NLHETheoryAdvisor
             _cbPfPlayers.SelectedIndexChanged += delegate(object s, EventArgs e) { RefreshPreflopMatrix(); };
             _tbPfStack.TextChanged += delegate(object s, EventArgs e) { RefreshPreflopMatrix(); };
             _grpPfGrid.Resize += delegate(object s, EventArgs e) { ResizePreflopMatrix(); };
+
+            Action layoutPanels = delegate()
+            {
+                int top = 136;
+                int height = Math.Max(260, page.ClientSize.Height - top - 10);
+                int gridWidth = Math.Max(500, Math.Min(560, page.ClientSize.Width - 300));
+                _grpPfGrid.SetBounds(10, top, gridWidth, height);
+                grp3.SetBounds(_grpPfGrid.Right + 10, top, Math.Max(260, page.ClientSize.Width - _grpPfGrid.Right - 20), height);
+            };
+            page.Resize += delegate(object s, EventArgs e) { layoutPanels(); };
+            layoutPanels();
         }
 
         private void BuildTheoryPage(TabPage page)
