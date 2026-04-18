@@ -158,15 +158,15 @@ namespace NLHETheoryAdvisor
             grp1.Resize += delegate(object s, EventArgs e) { hint.Width = grp1.Width - 30; };
 
             y = 30;
-            AddLabeled(grp2, "Hero Cards", x1, y + 3);
+            AddLabeled(grp2, "Hero Cards", x1, y + 3, 95);
             _tbHeroCards = MakeText(grp2, x1 + 120, y, 120);
             _tbHeroCards.Text = "AsKd";
-            AddLabeled(grp2, "Flop", x1 + 280, y + 3);
+            AddLabeled(grp2, "Flop", x1 + 280, y + 3, 40);
             _tbFlop = MakeText(grp2, x1 + 335, y, 120);
             _tbFlop.Text = "Qs7d2c";
-            AddLabeled(grp2, "Turn", x1 + 490, y + 3);
+            AddLabeled(grp2, "Turn", x1 + 490, y + 3, 40);
             _tbTurn = MakeText(grp2, x1 + 545, y, 50);
-            AddLabeled(grp2, "River", x1 + 620, y + 3);
+            AddLabeled(grp2, "River", x1 + 620, y + 3, 45);
             _tbRiver = MakeText(grp2, x1 + 675, y, 50);
 
             var note = new Label
@@ -180,11 +180,11 @@ namespace NLHETheoryAdvisor
             grp2.Resize += delegate(object s, EventArgs e) { note.Width = grp2.Width - 30; };
 
             y = 30;
-            AddLabeled(grp3, "Pot Size (bb)", x1, y + 3);
+            AddLabeled(grp3, "Pot Size (bb)", x1, y + 3, 95);
             _tbPot = MakeText(grp3, x1 + 120, y, 90);
-            AddLabeled(grp3, "Facing Bet (bb)", x1 + 245, y + 3);
+            AddLabeled(grp3, "Facing Bet (bb)", x1 + 245, y + 3, 105);
             _tbFacingBet = MakeText(grp3, x1 + 360, y, 90);
-            AddLabeled(grp3, "Effective Stack (bb)", x1 + 490, y + 3);
+            AddLabeled(grp3, "Effective Stack (bb)", x1 + 490, y + 3, 125);
             _tbEffStack = MakeText(grp3, x1 + 635, y, 90);
 
             var btnAnalyze = new Button
@@ -404,7 +404,7 @@ namespace NLHETheoryAdvisor
                 AllowUserToResizeRows = false,
                 ReadOnly = true,
                 MultiSelect = false,
-                ScrollBars = ScrollBars.None,
+                ScrollBars = ScrollBars.Vertical,
                 RowHeadersWidth = 58,
                 RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing,
                 SelectionMode = DataGridViewSelectionMode.CellSelect,
@@ -418,6 +418,7 @@ namespace NLHETheoryAdvisor
             _gridPfMatrix.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
             _gridPfMatrix.DefaultCellStyle.Font = new Font("Consolas", 7f, FontStyle.Bold);
             _gridPfMatrix.RowHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            _gridPfMatrix.MouseEnter += delegate(object s, EventArgs e) { _gridPfMatrix.Focus(); };
             _gridPfMatrix.CellClick += OnPreflopMatrixCellClick;
             _gridPfMatrix.CellFormatting += OnPreflopMatrixCellFormatting;
             BuildPreflopMatrix();
@@ -723,11 +724,9 @@ namespace NLHETheoryAdvisor
                 _gridPfMatrix.Columns[i].Width = colWidth;
             }
 
-            int clientHeight = _gridPfMatrix.ClientSize.Height - _gridPfMatrix.ColumnHeadersHeight - 2;
-            int rowHeight = Math.Max(18, clientHeight / 13);
             for (int i = 0; i < _gridPfMatrix.Rows.Count; i++)
             {
-                _gridPfMatrix.Rows[i].Height = rowHeight;
+                _gridPfMatrix.Rows[i].Height = 28;
             }
         }
 
