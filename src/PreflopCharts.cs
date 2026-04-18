@@ -299,11 +299,7 @@ namespace NLHETheoryAdvisor
         public static PreflopLookupResult Analyze(Position hero, Position villain, ScenarioType scenario, string handCode, double effectiveStackBb, int players)
         {
             var result = new PreflopLookupResult();
-            string normalizedHand = handCode == null ? string.Empty : handCode.Trim().ToUpperInvariant();
-            if (normalizedHand.Length == 3)
-            {
-                normalizedHand = string.Concat(normalizedHand[0], normalizedHand[1], char.ToLowerInvariant(normalizedHand[2]));
-            }
+            string normalizedHand = NormalizeHandInput(handCode);
 
             if (scenario == ScenarioType.Unopened)
             {
@@ -542,7 +538,7 @@ namespace NLHETheoryAdvisor
         public static List<Combo> ExpandHandCodeToCombos(string handCode)
         {
             var combos = new List<Combo>();
-            string normalized = handCode.Trim().ToUpperInvariant();
+            string normalized = NormalizeHandInput(handCode);
             char[] suits = new[] { 'c', 'd', 'h', 's' };
 
             if (normalized.Length == 2)
@@ -607,6 +603,56 @@ namespace NLHETheoryAdvisor
                 }
             }
             return combos;
+        }
+
+        public static string NormalizeHandInput(string handText)
+        {
+            if (string.IsNullOrWhiteSpace(handText))
+            {
+                return string.Empty;
+            }
+
+            string normalized = handText.Trim().Replace(" ", string.Empty);
+            List<Card> cards;
+            string error;
+            if (Card.TryParseCards(normalized, 2, out cards, out error))
+            {
+                return Card.ToHandCode(cards[0], cards[1]);
+            }
+
+            normalized = normalized.ToUpperInvariant();
+            if (normalized.Length == 3)
+            {
+                return NormalizeHandCode(normalized);
+            }
+            if (normalized.Length == 2)
+            {
+                return NormalizeHandCode(normalized);
+            }
+            return normalized;
+        }
+
+        private static string NormalizeHandCode(string token)
+        {
+            token = token.Trim().ToUpperInvariant().Replace(" ", string.Empty);
+            if (token.Length == 2)
+            {
+                return token;
+            }
+            if (token.Length != 3)
+            {
+                return token;
+            }
+
+            int rankA = Card.CharToRank(token[0]);
+            int rankB = Card.CharToRank(token[1]);
+            char suitedness = char.ToLowerInvariant(token[2]);
+
+            if (rankB > rankA)
+            {
+                return string.Concat(token[1], token[0], suitedness);
+            }
+            return string.Concat(token[0], token[1], suitedness);
         }
 
         private static void AddColdCall(Position caller, Position opener, string rangeText)

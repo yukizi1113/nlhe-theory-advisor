@@ -27,7 +27,7 @@
 
 - `状況入力`: テーブル状況、ハンド、board、ベット額、SPR 前提
 - `推奨`: 主推奨、代替ライン、根拠、指標
-- `プリフロップ表`: Janda のチャート照会
+- `プリフロップ表`: Janda のチャート照会。13x13 グリッドをクリックして確認可能
 - `理論ノート`: 実装で使った理論メモ
 
 ## ビルド
@@ -46,6 +46,31 @@ build.bat
 2. `Hero Cards` と board を入力する
 3. `Pot Size`, `Facing Bet`, `Effective Stack` を bb で入れる
 4. `解析` を押す
+
+### 用語
+
+- `Villain Position`
+  - ヘッズアップなら相手の位置
+  - 3人以上なら、今その判断の基準にしたい主対象の相手。通常は現在ベットしている相手、または最後に強くアクションした相手
+- `Street`
+  - 現在の段階。`Preflop / Flop / Turn / River`
+- `Scenario`
+  - 今まさに何に直面しているか
+  - `Checked To Hero`: 自分までチェックで回ってきた
+  - `Facing Bet`: 相手からベットされた
+  - `Facing Raise`: 自分のベット後にレイズ返しされた
+- `Facing Bet`
+  - その street で、今コールするために必要な額
+- `Effective Stack`
+  - 今後実際に取り切れる上限。通常は自分と主対象 Villain の残りスタックの小さい方
+
+### プリフロップ表の見方
+
+- 上三角は suited
+- 下三角は offsuit
+- 対角線は pocket pair
+- セルをクリックすると右側に詳細が出る
+- `Hand` 欄には `AKo`, `A5s`, `AsKd` のどれでも入力可能
 
 ## 実装メモ
 

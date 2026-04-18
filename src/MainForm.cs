@@ -53,6 +53,7 @@ namespace NLHETheoryAdvisor
         private RichTextBox _rtbPreflop;
         private RichTextBox _rtbLog;
         private ListView _lvMetrics;
+        private DataGridView _gridPfMatrix;
         private ComboBox _cbPfHeroPos;
         private ComboBox _cbPfVillainPos;
         private ComboBox _cbPfScenario;
@@ -96,7 +97,7 @@ namespace NLHETheoryAdvisor
             var grp1 = MakeGroup(page, "卓・レンジ前提", 10, 170);
             var grp2 = MakeGroup(page, "ハンド・ボード", 190, 145);
             var grp3 = MakeGroup(page, "ベット情報", 345, 145);
-            var grp4 = MakeGroup(page, "メモ", 500, 110);
+            var grp4 = MakeGroup(page, "用語ガイド", 500, 110);
 
             int x1 = 15;
             int y = 28;
@@ -147,7 +148,7 @@ namespace NLHETheoryAdvisor
             };
             var hint = new Label
             {
-                Text = "Range Shape は Auto で十分ですが、river の polarized / condensed 判定を自分で強制したいときだけ変更してください。",
+                Text = "3人以上では Villain Position は“今その判断の基準にしたい相手”を選んでください。通常は最後に強くアクションした相手、または現在ベットしている相手です。",
                 Location = new Point(15, 140),
                 Width = 820,
                 ForeColor = Color.Gray,
@@ -212,7 +213,7 @@ namespace NLHETheoryAdvisor
 
             var memo = new Label
             {
-                Text = "注: これは完全 solver ではなく、Janda 理論 + プリフロップ表 + ボード分類 + MDF / pot odds による高速ヒューリスティックです。",
+                Text = "Street = 現在の段階。Scenario = 今まさに直面している状況。Facing Bet = いまコールするのに必要な額。Effective Stack = 自分と主対象 Villain の残りスタックの小さい方。Multiway では残っている相手のうち実際に取り切れる最小スタックを目安にします。",
                 Location = new Point(15, 28),
                 Width = 800,
                 Height = 70,
@@ -308,8 +309,30 @@ namespace NLHETheoryAdvisor
 
         private void BuildPreflopPage(TabPage page)
         {
-            var grp1 = MakeGroup(page, "照会条件", 10, 110);
-            var grp2 = MakeGroup(page, "結果", 130, 580);
+            var grp1 = new GroupBox
+            {
+                Text = "照会条件",
+                Location = new Point(10, 10),
+                Size = new Size(page.Width - 20, 120),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
+                Parent = page
+            };
+            var grp2 = new GroupBox
+            {
+                Text = "13x13 グリッド",
+                Location = new Point(10, 140),
+                Size = new Size(500, page.Height - 150),
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left,
+                Parent = page
+            };
+            var grp3 = new GroupBox
+            {
+                Text = "選択ハンド詳細",
+                Location = new Point(520, 140),
+                Size = new Size(page.Width - 530, page.Height - 150),
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
+                Parent = page
+            };
 
             int x1 = 15;
             int y = 28;
@@ -320,13 +343,13 @@ namespace NLHETheoryAdvisor
             _cbPfVillainPos = MakeCombo(grp1, x1 + 270, y, 80);
             FillPositionCombo(_cbPfVillainPos);
             AddLabeled(grp1, "Scenario", x1 + 370, y + 3);
-            _cbPfScenario = MakeCombo(grp1, x1 + 450, y, 140);
+            _cbPfScenario = MakeCombo(grp1, x1 + 450, y, 210);
             FillPreflopScenarioCombo(_cbPfScenario);
 
-            AddLabeled(grp1, "Hand", x1 + 610, y + 3);
-            _tbPfHand = MakeText(grp1, x1 + 655, y, 70);
-            AddLabeled(grp1, "Stack", x1 + 740, y + 3);
-            _tbPfStack = MakeText(grp1, x1 + 785, y, 55);
+            AddLabeled(grp1, "Hand", x1 + 680, y + 3);
+            _tbPfHand = MakeText(grp1, x1 + 725, y, 70);
+            AddLabeled(grp1, "Stack", x1 + 810, y + 3);
+            _tbPfStack = MakeText(grp1, x1 + 855, y, 55);
 
             y += 35;
             AddLabeled(grp1, "Players", x1, y + 3);
@@ -350,14 +373,66 @@ namespace NLHETheoryAdvisor
             };
             btnLoadCurrent.Click += delegate(object s, EventArgs e) { LoadCurrentIntoPreflop(); };
 
+            var guide = new Label
+            {
+                Text = "上三角 = suited、下三角 = offsuit、対角 = pair。セルをクリックするとそのハンドの推奨を右に表示します。Hand 欄には AKo / A5s / AsKd のどれでも入力できます。",
+                Location = new Point(15, 88),
+                Width = grp1.Width - 30,
+                ForeColor = Color.Gray,
+                Parent = grp1
+            };
+            grp1.Resize += delegate(object s, EventArgs e)
+            {
+                guide.Width = grp1.Width - 30;
+            };
+
+            var legend = new Label
+            {
+                Dock = DockStyle.Top,
+                Height = 34,
+                Text = "緑: Open  青: Call  橙: 3bet/4bet  黄: Mix  灰: Fold",
+                Parent = grp2
+            };
+
+            _gridPfMatrix = new DataGridView
+            {
+                Dock = DockStyle.Fill,
+                Parent = grp2,
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                AllowUserToResizeColumns = false,
+                AllowUserToResizeRows = false,
+                ReadOnly = true,
+                MultiSelect = false,
+                RowHeadersWidth = 58,
+                SelectionMode = DataGridViewSelectionMode.CellSelect,
+                BackgroundColor = Color.White,
+                BorderStyle = BorderStyle.None,
+                CellBorderStyle = DataGridViewCellBorderStyle.Single,
+                ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing,
+                ColumnHeadersHeight = 30,
+                RowTemplate = { Height = 28 }
+            };
+            _gridPfMatrix.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            _gridPfMatrix.DefaultCellStyle.Font = new Font("Consolas", 8f, FontStyle.Bold);
+            _gridPfMatrix.CellClick += OnPreflopMatrixCellClick;
+            _gridPfMatrix.CellFormatting += OnPreflopMatrixCellFormatting;
+            BuildPreflopMatrix();
+
             _rtbPreflop = new RichTextBox
             {
                 Dock = DockStyle.Fill,
                 ReadOnly = true,
                 Font = new Font("Consolas", 9f),
-                Parent = grp2
+                Parent = grp3
             };
             _rtbPreflop.BorderStyle = BorderStyle.None;
+
+            _cbPfHeroPos.SelectedIndexChanged += delegate(object s, EventArgs e) { RefreshPreflopMatrix(); };
+            _cbPfVillainPos.SelectedIndexChanged += delegate(object s, EventArgs e) { RefreshPreflopMatrix(); };
+            _cbPfScenario.SelectedIndexChanged += delegate(object s, EventArgs e) { RefreshPreflopMatrix(); };
+            _cbPfPlayers.SelectedIndexChanged += delegate(object s, EventArgs e) { RefreshPreflopMatrix(); };
+            _tbPfStack.TextChanged += delegate(object s, EventArgs e) { RefreshPreflopMatrix(); };
         }
 
         private void BuildTheoryPage(TabPage page)
@@ -436,6 +511,8 @@ namespace NLHETheoryAdvisor
             SelectComboValue(_cbPfPlayers, 2);
             _tbPfHand.Text = "A5s";
             _tbPfStack.Text = "100";
+            RefreshPreflopMatrix();
+            RunPreflopLookup();
         }
 
         private void RunAnalysis()
@@ -476,29 +553,17 @@ namespace NLHETheoryAdvisor
                     stack = 100.0;
                 }
 
-                string hand = (_tbPfHand.Text ?? string.Empty).Trim();
+                string hand = PreflopCharts.NormalizeHandInput((_tbPfHand.Text ?? string.Empty).Trim());
+                if (string.IsNullOrWhiteSpace(hand))
+                {
+                    _rtbPreflop.Text = "Hand 欄へ AKo / A5s / AsKd のように入力するか、左の 13x13 グリッドからセルをクリックしてください。";
+                    return;
+                }
+
+                _tbPfHand.Text = hand;
                 var result = PreflopCharts.Analyze(hero, villain, scenario, hand, stack, players);
-                var sb = new StringBuilder();
-                sb.AppendLine("Action: " + result.Action);
-                if (!string.IsNullOrWhiteSpace(result.SecondaryAction))
-                {
-                    sb.AppendLine("Alt   : " + result.SecondaryAction);
-                }
-                sb.AppendLine("Spot  : " + result.SpotLabel);
-                if (!string.IsNullOrWhiteSpace(result.RangeSummary))
-                {
-                    sb.AppendLine();
-                    sb.AppendLine(result.RangeSummary);
-                }
-                if (result.Notes.Count > 0)
-                {
-                    sb.AppendLine();
-                    foreach (var note in result.Notes)
-                    {
-                        sb.AppendLine("- " + note);
-                    }
-                }
-                _rtbPreflop.Text = sb.ToString();
+                ShowPreflopDetail(hand, result);
+                SelectPreflopCell(hand);
                 Log("PF 照会: " + result.Action);
             }
             catch (Exception ex)
@@ -512,7 +577,7 @@ namespace NLHETheoryAdvisor
             SelectComboValue(_cbPfHeroPos, GetSelectedValue<Position>(_cbHeroPos));
             SelectComboValue(_cbPfVillainPos, GetSelectedValue<Position>(_cbVillainPos));
             SelectComboValue(_cbPfPlayers, GetSelectedValue<int>(_cbPlayers));
-            _tbPfHand.Text = _tbHeroCards.Text;
+            _tbPfHand.Text = PreflopCharts.NormalizeHandInput(_tbHeroCards.Text);
             _tbPfStack.Text = _tbEffStack.Text;
 
             var scenario = GetSelectedValue<ScenarioType>(_cbScenario);
@@ -524,6 +589,253 @@ namespace NLHETheoryAdvisor
             {
                 SelectComboValue(_cbPfScenario, ScenarioType.FacingOpen);
             }
+
+            RefreshPreflopMatrix();
+            RunPreflopLookup();
+        }
+
+        private void BuildPreflopMatrix()
+        {
+            if (_gridPfMatrix == null)
+            {
+                return;
+            }
+
+            string[] ranks = new[] { "A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2" };
+            _gridPfMatrix.Columns.Clear();
+            _gridPfMatrix.Rows.Clear();
+
+            foreach (string rank in ranks)
+            {
+                var col = new DataGridViewTextBoxColumn();
+                col.HeaderText = rank;
+                col.SortMode = DataGridViewColumnSortMode.NotSortable;
+                col.Width = 32;
+                _gridPfMatrix.Columns.Add(col);
+            }
+
+            for (int row = 0; row < ranks.Length; row++)
+            {
+                _gridPfMatrix.Rows.Add();
+                _gridPfMatrix.Rows[row].HeaderCell.Value = ranks[row];
+            }
+
+            RefreshPreflopMatrix();
+        }
+
+        private void RefreshPreflopMatrix()
+        {
+            if (_gridPfMatrix == null || _gridPfMatrix.Columns.Count == 0)
+            {
+                return;
+            }
+
+            var hero = GetSelectedValue<Position>(_cbPfHeroPos);
+            var villain = GetSelectedValue<Position>(_cbPfVillainPos);
+            var scenario = GetSelectedValue<ScenarioType>(_cbPfScenario);
+            int players = GetSelectedValue<int>(_cbPfPlayers);
+            double stack;
+            if (!TryParseDouble(_tbPfStack.Text, out stack))
+            {
+                stack = 100.0;
+            }
+
+            for (int row = 0; row < 13; row++)
+            {
+                for (int col = 0; col < 13; col++)
+                {
+                    string handCode = GetMatrixHandCode(row, col);
+                    var result = PreflopCharts.Analyze(hero, villain, scenario, handCode, stack, players);
+                    var cell = _gridPfMatrix.Rows[row].Cells[col];
+                    cell.Value = handCode;
+                    cell.Tag = result;
+                    cell.ToolTipText = BuildPreflopTooltip(handCode, result);
+                    cell.Style.BackColor = GetPreflopActionColor(result);
+                    cell.Style.ForeColor = Color.Black;
+                    cell.Style.SelectionForeColor = Color.Black;
+                    cell.Style.SelectionBackColor = ControlPaint.Dark(GetPreflopActionColor(result));
+                }
+            }
+
+            string normalizedHand = PreflopCharts.NormalizeHandInput(_tbPfHand.Text);
+            if (!string.IsNullOrWhiteSpace(normalizedHand))
+            {
+                SelectPreflopCell(normalizedHand);
+                var selected = GetPreflopResultForHand(normalizedHand);
+                if (selected != null)
+                {
+                    ShowPreflopDetail(normalizedHand, selected);
+                }
+            }
+        }
+
+        private void ShowPreflopDetail(string handCode, PreflopLookupResult result)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("Hand  : " + handCode);
+            sb.AppendLine("Action: " + result.Action);
+            if (!string.IsNullOrWhiteSpace(result.SecondaryAction))
+            {
+                sb.AppendLine("Alt   : " + result.SecondaryAction);
+            }
+            sb.AppendLine("Spot  : " + result.SpotLabel);
+            if (!string.IsNullOrWhiteSpace(result.RangeSummary))
+            {
+                sb.AppendLine();
+                sb.AppendLine(result.RangeSummary);
+            }
+            if (result.Notes.Count > 0)
+            {
+                sb.AppendLine();
+                foreach (var note in result.Notes)
+                {
+                    sb.AppendLine("- " + note);
+                }
+            }
+            _rtbPreflop.Text = sb.ToString();
+        }
+
+        private void SelectPreflopCell(string handCode)
+        {
+            if (_gridPfMatrix == null || string.IsNullOrWhiteSpace(handCode))
+            {
+                return;
+            }
+
+            string normalized = PreflopCharts.NormalizeHandInput(handCode);
+            for (int row = 0; row < 13; row++)
+            {
+                for (int col = 0; col < 13; col++)
+                {
+                    if (GetMatrixHandCode(row, col) == normalized)
+                    {
+                        _gridPfMatrix.ClearSelection();
+                        _gridPfMatrix.CurrentCell = _gridPfMatrix.Rows[row].Cells[col];
+                        _gridPfMatrix.Rows[row].Cells[col].Selected = true;
+                        return;
+                    }
+                }
+            }
+        }
+
+        private PreflopLookupResult GetPreflopResultForHand(string handCode)
+        {
+            if (_gridPfMatrix == null || string.IsNullOrWhiteSpace(handCode))
+            {
+                return null;
+            }
+
+            string normalized = PreflopCharts.NormalizeHandInput(handCode);
+            for (int row = 0; row < 13; row++)
+            {
+                for (int col = 0; col < 13; col++)
+                {
+                    if (GetMatrixHandCode(row, col) == normalized)
+                    {
+                        return _gridPfMatrix.Rows[row].Cells[col].Tag as PreflopLookupResult;
+                    }
+                }
+            }
+            return null;
+        }
+
+        private void OnPreflopMatrixCellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0)
+            {
+                return;
+            }
+
+            string handCode = GetMatrixHandCode(e.RowIndex, e.ColumnIndex);
+            _tbPfHand.Text = handCode;
+            var result = _gridPfMatrix.Rows[e.RowIndex].Cells[e.ColumnIndex].Tag as PreflopLookupResult;
+            if (result == null)
+            {
+                RunPreflopLookup();
+                return;
+            }
+
+            ShowPreflopDetail(handCode, result);
+            Log("PF セル選択: " + handCode + " -> " + result.Action);
+        }
+
+        private void OnPreflopMatrixCellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0)
+            {
+                return;
+            }
+            e.CellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+        }
+
+        private static string GetMatrixHandCode(int rowIndex, int columnIndex)
+        {
+            char[] ranks = new[] { 'A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2' };
+            char rowRank = ranks[rowIndex];
+            char colRank = ranks[columnIndex];
+
+            if (rowIndex == columnIndex)
+            {
+                return new string(new[] { rowRank, rowRank });
+            }
+
+            if (rowIndex < columnIndex)
+            {
+                return string.Concat(rowRank, colRank, 's');
+            }
+
+            return string.Concat(colRank, rowRank, 'o');
+        }
+
+        private static string BuildPreflopTooltip(string handCode, PreflopLookupResult result)
+        {
+            if (result == null)
+            {
+                return handCode;
+            }
+
+            var sb = new StringBuilder();
+            sb.Append(handCode);
+            sb.Append(" : ");
+            sb.Append(result.Action);
+            if (!string.IsNullOrWhiteSpace(result.SecondaryAction))
+            {
+                sb.Append(" / ");
+                sb.Append(result.SecondaryAction);
+            }
+            return sb.ToString();
+        }
+
+        private static Color GetPreflopActionColor(PreflopLookupResult result)
+        {
+            if (result == null)
+            {
+                return Color.White;
+            }
+
+            if (!string.IsNullOrWhiteSpace(result.SecondaryAction) || result.Action.IndexOf("混合", StringComparison.Ordinal) >= 0)
+            {
+                return Color.FromArgb(255, 244, 188);
+            }
+            if (result.Action.IndexOf("オープン", StringComparison.Ordinal) >= 0)
+            {
+                return Color.FromArgb(210, 243, 214);
+            }
+            if (result.Action.IndexOf("コール", StringComparison.Ordinal) >= 0)
+            {
+                return Color.FromArgb(216, 235, 255);
+            }
+            if (result.Action.IndexOf("3ベット", StringComparison.Ordinal) >= 0
+                || result.Action.IndexOf("4ベット", StringComparison.Ordinal) >= 0
+                || result.Action.IndexOf("コミット", StringComparison.Ordinal) >= 0)
+            {
+                return Color.FromArgb(255, 221, 189);
+            }
+            if (result.Action.IndexOf("フォールド", StringComparison.Ordinal) >= 0)
+            {
+                return Color.FromArgb(235, 235, 235);
+            }
+            return Color.White;
         }
 
         private void ShowRecommendation(Recommendation rec)
@@ -803,10 +1115,10 @@ namespace NLHETheoryAdvisor
         private static void FillStreetCombo(ComboBox cb)
         {
             cb.Items.Clear();
-            cb.Items.Add(new ComboChoice("Preflop", Street.Preflop));
-            cb.Items.Add(new ComboChoice("Flop", Street.Flop));
-            cb.Items.Add(new ComboChoice("Turn", Street.Turn));
-            cb.Items.Add(new ComboChoice("River", Street.River));
+            cb.Items.Add(new ComboChoice("Preflop (プリフロップ)", Street.Preflop));
+            cb.Items.Add(new ComboChoice("Flop (フロップ)", Street.Flop));
+            cb.Items.Add(new ComboChoice("Turn (ターン)", Street.Turn));
+            cb.Items.Add(new ComboChoice("River (リバー)", Street.River));
             cb.SelectedIndex = 1;
         }
 
@@ -816,28 +1128,28 @@ namespace NLHETheoryAdvisor
             cb.Items.Add(new ComboChoice("Single Raised", PotType.SingleRaised));
             cb.Items.Add(new ComboChoice("3-Bet Pot", PotType.ThreeBet));
             cb.Items.Add(new ComboChoice("4-Bet Pot", PotType.FourBet));
-            cb.Items.Add(new ComboChoice("Multiway", PotType.Multiway));
+            cb.Items.Add(new ComboChoice("Multiway / 3人以上", PotType.Multiway));
             cb.SelectedIndex = 0;
         }
 
         private static void FillScenarioCombo(ComboBox cb)
         {
             cb.Items.Clear();
-            cb.Items.Add(new ComboChoice("Unopened", ScenarioType.Unopened));
-            cb.Items.Add(new ComboChoice("Facing Open", ScenarioType.FacingOpen));
-            cb.Items.Add(new ComboChoice("Facing 3-Bet", ScenarioType.Facing3Bet));
-            cb.Items.Add(new ComboChoice("Checked To Hero", ScenarioType.CheckedToHero));
-            cb.Items.Add(new ComboChoice("Facing Bet", ScenarioType.FacingBet));
-            cb.Items.Add(new ComboChoice("Facing Raise", ScenarioType.FacingRaise));
+            cb.Items.Add(new ComboChoice("Unopened: まだ誰も入れていない", ScenarioType.Unopened));
+            cb.Items.Add(new ComboChoice("Facing Open: オープンに直面", ScenarioType.FacingOpen));
+            cb.Items.Add(new ComboChoice("Facing 3-Bet: 3ベットに直面", ScenarioType.Facing3Bet));
+            cb.Items.Add(new ComboChoice("Checked To Hero: 自分にチェックで回った", ScenarioType.CheckedToHero));
+            cb.Items.Add(new ComboChoice("Facing Bet: 相手からベットされた", ScenarioType.FacingBet));
+            cb.Items.Add(new ComboChoice("Facing Raise: 自分のベット後にレイズされた", ScenarioType.FacingRaise));
             cb.SelectedIndex = 3;
         }
 
         private static void FillPreflopScenarioCombo(ComboBox cb)
         {
             cb.Items.Clear();
-            cb.Items.Add(new ComboChoice("Unopened", ScenarioType.Unopened));
-            cb.Items.Add(new ComboChoice("Facing Open", ScenarioType.FacingOpen));
-            cb.Items.Add(new ComboChoice("Facing 3-Bet", ScenarioType.Facing3Bet));
+            cb.Items.Add(new ComboChoice("Unopened: まだ誰も入れていない", ScenarioType.Unopened));
+            cb.Items.Add(new ComboChoice("Facing Open: オープンに直面", ScenarioType.FacingOpen));
+            cb.Items.Add(new ComboChoice("Facing 3-Bet: 3ベットに直面", ScenarioType.Facing3Bet));
             cb.SelectedIndex = 1;
         }
 
