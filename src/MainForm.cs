@@ -54,6 +54,7 @@ namespace NLHETheoryAdvisor
         private RichTextBox _rtbLog;
         private ListView _lvMetrics;
         private DataGridView _gridPfMatrix;
+        private GroupBox _grpPfGrid;
         private ComboBox _cbPfHeroPos;
         private ComboBox _cbPfVillainPos;
         private ComboBox _cbPfScenario;
@@ -69,7 +70,7 @@ namespace NLHETheoryAdvisor
             StartPosition = FormStartPosition.CenterScreen;
             Font = new Font("Meiryo UI", 9f);
 
-            var bottom = new Panel { Height = 190, Dock = DockStyle.Bottom, Parent = this };
+            var bottom = new Panel { Height = 170, Dock = DockStyle.Bottom, Parent = this };
             var tabs = new TabControl { Dock = DockStyle.Fill, Parent = this };
             tabs.Padding = new Point(10, 4);
 
@@ -101,34 +102,34 @@ namespace NLHETheoryAdvisor
 
             int x1 = 15;
             int y = 28;
-            _cbHeroPos = MakeCombo(grp1, x1 + 120, y, 90);
-            _cbVillainPos = MakeCombo(grp1, x1 + 360, y, 90);
-            AddLabeled(grp1, "Hero Position", x1, y + 3);
-            AddLabeled(grp1, "Villain Position", x1 + 235, y + 3);
+            AddLabeled(grp1, "Hero Position", x1, y + 3, 100);
+            _cbHeroPos = MakeCombo(grp1, x1 + 105, y, 95);
+            AddLabeled(grp1, "Villain Position", x1 + 235, y + 3, 105);
+            _cbVillainPos = MakeCombo(grp1, x1 + 345, y, 95);
             FillPositionCombo(_cbHeroPos);
             FillPositionCombo(_cbVillainPos);
 
-            y += 36;
-            _cbStreet = MakeCombo(grp1, x1 + 120, y, 90);
-            _cbPotType = MakeCombo(grp1, x1 + 360, y, 120);
-            AddLabeled(grp1, "Street", x1, y + 3);
-            AddLabeled(grp1, "Pot Type", x1 + 235, y + 3);
+            y += 34;
+            AddLabeled(grp1, "Street", x1, y + 3, 100);
+            _cbStreet = MakeCombo(grp1, x1 + 105, y, 150);
+            AddLabeled(grp1, "Pot Type", x1 + 285, y + 3, 90);
+            _cbPotType = MakeCombo(grp1, x1 + 380, y, 170);
             FillStreetCombo(_cbStreet);
             FillPotTypeCombo(_cbPotType);
 
-            y += 36;
-            _cbScenario = MakeCombo(grp1, x1 + 120, y, 180);
-            _cbPlayers = MakeCombo(grp1, x1 + 420, y, 60);
-            AddLabeled(grp1, "Scenario", x1, y + 3);
-            AddLabeled(grp1, "Players", x1 + 340, y + 3);
+            y += 34;
+            AddLabeled(grp1, "Scenario", x1, y + 3, 100);
+            _cbScenario = MakeCombo(grp1, x1 + 105, y, 270);
+            AddLabeled(grp1, "Players", x1 + 405, y + 3, 70);
+            _cbPlayers = MakeCombo(grp1, x1 + 480, y, 70);
             FillScenarioCombo(_cbScenario);
             FillPlayersCombo(_cbPlayers);
 
-            y += 36;
-            _cbOpponentProfile = MakeCombo(grp1, x1 + 120, y, 180);
-            _cbRangeShape = MakeCombo(grp1, x1 + 420, y, 120);
-            AddLabeled(grp1, "Villain Profile", x1, y + 3);
-            AddLabeled(grp1, "Range Shape", x1 + 320, y + 3);
+            y += 34;
+            AddLabeled(grp1, "Villain Profile", x1, y + 3, 100);
+            _cbOpponentProfile = MakeCombo(grp1, x1 + 105, y, 180);
+            AddLabeled(grp1, "Range Shape", x1 + 320, y + 3, 90);
+            _cbRangeShape = MakeCombo(grp1, x1 + 415, y, 135);
             FillOpponentProfileCombo(_cbOpponentProfile);
             FillRangeShapeCombo(_cbRangeShape);
 
@@ -149,7 +150,7 @@ namespace NLHETheoryAdvisor
             var hint = new Label
             {
                 Text = "3人以上では Villain Position は“今その判断の基準にしたい相手”を選んでください。通常は最後に強くアクションした相手、または現在ベットしている相手です。",
-                Location = new Point(15, 140),
+                Location = new Point(15, 156),
                 Width = 820,
                 ForeColor = Color.Gray,
                 Parent = grp1
@@ -317,50 +318,55 @@ namespace NLHETheoryAdvisor
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
                 Parent = page
             };
-            var grp2 = new GroupBox
+            var split = new SplitContainer
+            {
+                Location = new Point(10, 136),
+                Size = new Size(page.Width - 20, page.Height - 146),
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
+                Panel1MinSize = 500,
+                Panel2MinSize = 260,
+                SplitterDistance = Math.Min(560, Math.Max(500, page.Width - 340)),
+                Parent = page
+            };
+            _grpPfGrid = new GroupBox
             {
                 Text = "13x13 グリッド",
-                Location = new Point(10, 140),
-                Size = new Size(500, page.Height - 150),
-                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left,
-                Parent = page
+                Dock = DockStyle.Fill,
+                Parent = split.Panel1
             };
             var grp3 = new GroupBox
             {
                 Text = "選択ハンド詳細",
-                Location = new Point(520, 140),
-                Size = new Size(page.Width - 530, page.Height - 150),
-                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
-                Parent = page
+                Dock = DockStyle.Fill,
+                Parent = split.Panel2
             };
 
             int x1 = 15;
             int y = 28;
-            AddLabeled(grp1, "Hero Pos", x1, y + 3);
-            _cbPfHeroPos = MakeCombo(grp1, x1 + 80, y, 80);
+            AddLabeled(grp1, "Hero Pos", x1, y + 3, 75);
+            _cbPfHeroPos = MakeCombo(grp1, x1 + 90, y, 80);
             FillPositionCombo(_cbPfHeroPos);
-            AddLabeled(grp1, "Villain Pos", x1 + 180, y + 3);
-            _cbPfVillainPos = MakeCombo(grp1, x1 + 270, y, 80);
+            AddLabeled(grp1, "Villain Pos", x1 + 200, y + 3, 80);
+            _cbPfVillainPos = MakeCombo(grp1, x1 + 290, y, 80);
             FillPositionCombo(_cbPfVillainPos);
-            AddLabeled(grp1, "Scenario", x1 + 370, y + 3);
-            _cbPfScenario = MakeCombo(grp1, x1 + 450, y, 210);
+            AddLabeled(grp1, "Scenario", x1 + 390, y + 3, 70);
+            _cbPfScenario = MakeCombo(grp1, x1 + 470, y, 230);
             FillPreflopScenarioCombo(_cbPfScenario);
 
-            AddLabeled(grp1, "Hand", x1 + 680, y + 3);
-            _tbPfHand = MakeText(grp1, x1 + 725, y, 70);
-            AddLabeled(grp1, "Stack", x1 + 810, y + 3);
-            _tbPfStack = MakeText(grp1, x1 + 855, y, 55);
-
             y += 35;
-            AddLabeled(grp1, "Players", x1, y + 3);
-            _cbPfPlayers = MakeCombo(grp1, x1 + 80, y, 80);
+            AddLabeled(grp1, "Players", x1, y + 3, 70);
+            _cbPfPlayers = MakeCombo(grp1, x1 + 90, y, 80);
             FillPlayersCombo(_cbPfPlayers);
+            AddLabeled(grp1, "Hand", x1 + 200, y + 3, 45);
+            _tbPfHand = MakeText(grp1, x1 + 250, y, 85);
+            AddLabeled(grp1, "Stack", x1 + 360, y + 3, 45);
+            _tbPfStack = MakeText(grp1, x1 + 410, y, 70);
 
             var btnQuery = new Button
             {
                 Text = "照会",
                 Width = 90,
-                Location = new Point(270, y - 1),
+                Location = new Point(520, y - 1),
                 Parent = grp1
             };
             btnQuery.Click += delegate(object s, EventArgs e) { RunPreflopLookup(); };
@@ -368,7 +374,7 @@ namespace NLHETheoryAdvisor
             {
                 Text = "現在の入力を反映",
                 Width = 140,
-                Location = new Point(370, y - 1),
+                Location = new Point(620, y - 1),
                 Parent = grp1
             };
             btnLoadCurrent.Click += delegate(object s, EventArgs e) { LoadCurrentIntoPreflop(); };
@@ -389,22 +395,24 @@ namespace NLHETheoryAdvisor
             var legend = new Label
             {
                 Dock = DockStyle.Top,
-                Height = 34,
+                Height = 24,
                 Text = "緑: Open  青: Call  橙: 3bet/4bet  黄: Mix  灰: Fold",
-                Parent = grp2
+                Parent = _grpPfGrid
             };
 
             _gridPfMatrix = new DataGridView
             {
                 Dock = DockStyle.Fill,
-                Parent = grp2,
+                Parent = _grpPfGrid,
                 AllowUserToAddRows = false,
                 AllowUserToDeleteRows = false,
                 AllowUserToResizeColumns = false,
                 AllowUserToResizeRows = false,
                 ReadOnly = true,
                 MultiSelect = false,
+                ScrollBars = ScrollBars.None,
                 RowHeadersWidth = 58,
+                RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing,
                 SelectionMode = DataGridViewSelectionMode.CellSelect,
                 BackgroundColor = Color.White,
                 BorderStyle = BorderStyle.None,
@@ -414,7 +422,8 @@ namespace NLHETheoryAdvisor
                 RowTemplate = { Height = 28 }
             };
             _gridPfMatrix.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
-            _gridPfMatrix.DefaultCellStyle.Font = new Font("Consolas", 8f, FontStyle.Bold);
+            _gridPfMatrix.DefaultCellStyle.Font = new Font("Consolas", 7f, FontStyle.Bold);
+            _gridPfMatrix.RowHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
             _gridPfMatrix.CellClick += OnPreflopMatrixCellClick;
             _gridPfMatrix.CellFormatting += OnPreflopMatrixCellFormatting;
             BuildPreflopMatrix();
@@ -433,6 +442,7 @@ namespace NLHETheoryAdvisor
             _cbPfScenario.SelectedIndexChanged += delegate(object s, EventArgs e) { RefreshPreflopMatrix(); };
             _cbPfPlayers.SelectedIndexChanged += delegate(object s, EventArgs e) { RefreshPreflopMatrix(); };
             _tbPfStack.TextChanged += delegate(object s, EventArgs e) { RefreshPreflopMatrix(); };
+            _grpPfGrid.Resize += delegate(object s, EventArgs e) { ResizePreflopMatrix(); };
         }
 
         private void BuildTheoryPage(TabPage page)
@@ -449,7 +459,17 @@ namespace NLHETheoryAdvisor
 
         private void BuildBottomPanel(Panel panel)
         {
+            panel.Padding = new Padding(0);
             var ctrl = new Panel { Height = 40, Dock = DockStyle.Top, Parent = panel };
+            var logLayout = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 1,
+                RowCount = 2,
+                Parent = panel
+            };
+            logLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 20f));
+            logLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
 
             var btnAnalyze = new Button
             {
@@ -478,15 +498,25 @@ namespace NLHETheoryAdvisor
             };
             btnPf.Click += delegate(object s, EventArgs e) { RunPreflopLookup(); };
 
-            new Label { Text = "ログ", Dock = DockStyle.Top, Height = 18, Parent = panel };
+            new Label
+            {
+                Text = "ログ",
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Parent = logLayout
+            };
             _rtbLog = new RichTextBox
             {
                 Dock = DockStyle.Fill,
                 ReadOnly = true,
                 Font = new Font("Consolas", 9f),
                 BackColor = Color.White,
-                Parent = panel
+                DetectUrls = false,
+                Parent = logLayout
             };
+            logLayout.SetCellPosition(_rtbLog, new TableLayoutPanelCellPosition(0, 1));
+            _rtbLog.BorderStyle = BorderStyle.FixedSingle;
+            _rtbLog.Margin = new Padding(0);
         }
 
         private void PopulateDefaults()
@@ -621,6 +651,7 @@ namespace NLHETheoryAdvisor
             }
 
             RefreshPreflopMatrix();
+            ResizePreflopMatrix();
         }
 
         private void RefreshPreflopMatrix()
@@ -666,6 +697,32 @@ namespace NLHETheoryAdvisor
                 {
                     ShowPreflopDetail(normalizedHand, selected);
                 }
+            }
+            ResizePreflopMatrix();
+        }
+
+        private void ResizePreflopMatrix()
+        {
+            if (_gridPfMatrix == null || _gridPfMatrix.Columns.Count == 0)
+            {
+                return;
+            }
+
+            _gridPfMatrix.RowHeadersWidth = 32;
+            _gridPfMatrix.ColumnHeadersHeight = 20;
+
+            int clientWidth = _gridPfMatrix.ClientSize.Width - _gridPfMatrix.RowHeadersWidth - 2;
+            int colWidth = Math.Max(24, clientWidth / 13);
+            for (int i = 0; i < _gridPfMatrix.Columns.Count; i++)
+            {
+                _gridPfMatrix.Columns[i].Width = colWidth;
+            }
+
+            int clientHeight = _gridPfMatrix.ClientSize.Height - _gridPfMatrix.ColumnHeadersHeight - 2;
+            int rowHeight = Math.Max(18, clientHeight / 13);
+            for (int i = 0; i < _gridPfMatrix.Rows.Count; i++)
+            {
+                _gridPfMatrix.Rows[i].Height = rowHeight;
             }
         }
 
@@ -1046,6 +1103,8 @@ namespace NLHETheoryAdvisor
         {
             if (_rtbLog == null) return;
             _rtbLog.AppendText(DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture) + "  " + message + Environment.NewLine);
+            _rtbLog.SelectionStart = _rtbLog.TextLength;
+            _rtbLog.ScrollToCaret();
         }
 
         private static GroupBox MakeGroup(TabPage page, string text, int y, int height)
@@ -1096,6 +1155,17 @@ namespace NLHETheoryAdvisor
                 Text = text,
                 Location = new Point(x, y),
                 Width = 120,
+                Parent = parent
+            };
+        }
+
+        private static void AddLabeled(Control parent, string text, int x, int y, int width)
+        {
+            new Label
+            {
+                Text = text,
+                Location = new Point(x, y),
+                Width = width,
                 Parent = parent
             };
         }
