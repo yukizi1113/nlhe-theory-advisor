@@ -1,7 +1,7 @@
 # NLHE Theory Advisor
 
 `Applications of No-Limit Hold'em` の理論を土台にした Windows フォームアプリです。  
-`twitcas-recorder` のように軽い単体 WinForms 構成で、現在の状況を入れると推奨アクションを即座に返します。
+軽い単体 WinForms 構成で、現在の状況を入れると推奨アクションを即座に返します。
 
 ## 何をするアプリか
 
