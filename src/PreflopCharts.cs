@@ -433,7 +433,7 @@ namespace NLHETheoryAdvisor
                     result.Notes.Add("推奨防衛レンジ外です。");
                 }
 
-                result.Notes.Add("本書では IP ではコール防衛が増え、OOP では再レイズ防衛が増えます。");
+                result.Notes.Add("本書は IP/OOP を単純化せず、call と 3bet/4bet をポジション・レンジ・スタックで混ぜます。");
                 AddAdjustments(result, effectiveStackBb, players);
                 return result;
             }

@@ -319,6 +319,8 @@ namespace NLHETheoryAdvisor
             AddScore(scores, ActionClass.Call, 18);
 
             double betRatio = input.PotSize > 0.0 ? input.FacingBetSize / input.PotSize : 0.0;
+            EnsureReason(recommendation, "MDF と pot odds は出発点ですが、固定の防衛義務ではなく相手レンジと bluff の質で前後します。");
+            AddTheoryReference(recommendation, "Defending by Calling, pp.99-104");
 
             if (hand.IsMonster)
             {
@@ -361,10 +363,10 @@ namespace NLHETheoryAdvisor
                 AddTheoryReference(recommendation, "Defending by Raising — The Value to Bluff Raising Ratio on the Flop, p.120");
                 if (!input.HeroHasPosition && input.Street == Street.Turn)
                 {
-                    AddScore(scores, ActionClass.Call, -8);
-                    AddScore(scores, ActionClass.RaiseLarge, 8);
-                    EnsureReason(recommendation, "OOP turn の draw は check-call より raise / jam の方が扱いやすいです。");
-                    AddTheoryReference(recommendation, "Playing Draws Out of Position on the Turn, p.300");
+                    AddScore(scores, ActionClass.Call, hand.ShowdownScore >= 18 ? 8 : 2);
+                    AddScore(scores, ActionClass.RaiseLarge, hand.ShowdownScore < 18 ? 6 : 2);
+                    EnsureReason(recommendation, "OOP turn の draw は一律に raise / jam へ寄せず、実現性の高い draw は call も残ります。");
+                    AddTheoryReference(recommendation, "Playing Draws Out of Position on the Turn, pp.286-291");
                 }
             }
             else if (hand.MadeStrengthScore >= 48)
