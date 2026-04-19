@@ -24,6 +24,60 @@ namespace NLHETheoryAdvisor
         }
     }
 
+    sealed class WheelScrollPanel : Panel
+    {
+        public WheelScrollPanel()
+        {
+            AutoScroll = true;
+            TabStop = true;
+            SetStyle(ControlStyles.Selectable, true);
+        }
+
+        protected override void OnMouseEnter(EventArgs e)
+        {
+            Focus();
+            base.OnMouseEnter(e);
+        }
+
+        protected override void OnControlAdded(ControlEventArgs e)
+        {
+            base.OnControlAdded(e);
+            HookWheel(e.Control);
+        }
+
+        private void HookWheel(Control control)
+        {
+            control.MouseEnter += delegate(object sender, EventArgs e) { Focus(); };
+            control.MouseWheel += delegate(object sender, MouseEventArgs e) { ScrollByWheel(e); };
+            control.ControlAdded += delegate(object sender, ControlEventArgs e) { HookWheel(e.Control); };
+
+            foreach (Control child in control.Controls)
+            {
+                HookWheel(child);
+            }
+        }
+
+        protected override void OnMouseWheel(MouseEventArgs e)
+        {
+            ScrollByWheel(e);
+            base.OnMouseWheel(e);
+        }
+
+        private void ScrollByWheel(MouseEventArgs e)
+        {
+            if (!VerticalScroll.Visible)
+            {
+                return;
+            }
+
+            int notches = Math.Max(1, Math.Abs(e.Delta) / 120);
+            int step = Math.Max(24, SystemInformation.MouseWheelScrollLines * 14) * notches;
+            int currentY = -AutoScrollPosition.Y;
+            int newY = e.Delta > 0 ? Math.Max(0, currentY - step) : currentY + step;
+            AutoScrollPosition = new Point(0, newY);
+        }
+    }
+
     class MainForm : Form
     {
         private ComboBox _cbHeroPos;
@@ -70,8 +124,13 @@ namespace NLHETheoryAdvisor
             StartPosition = FormStartPosition.CenterScreen;
             Font = new Font("Meiryo UI", 9f);
 
-            var bottom = new Panel { Height = 170, Dock = DockStyle.Bottom, Parent = this };
-            var tabs = new TabControl { Dock = DockStyle.Fill, Parent = this };
+            var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Parent = this };
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 170f));
+
+            var tabs = new TabControl { Dock = DockStyle.Fill, Margin = new Padding(0), Parent = layout };
+            var bottom = new Panel { Dock = DockStyle.Fill, Margin = new Padding(0), Parent = layout };
             tabs.Padding = new Point(10, 4);
 
             var p1 = new TabPage("  状況入力  ");
@@ -95,10 +154,11 @@ namespace NLHETheoryAdvisor
 
         private void BuildInputPage(TabPage page)
         {
-            var grp1 = MakeGroup(page, "卓・レンジ前提", 10, 170);
-            var grp2 = MakeGroup(page, "ハンド・ボード", 190, 145);
-            var grp3 = MakeGroup(page, "ベット情報", 345, 145);
-            var grp4 = MakeGroup(page, "用語ガイド", 500, 110);
+            var canvas = new WheelScrollPanel { Dock = DockStyle.Fill, Parent = page };
+            var grp1 = MakeGroup(canvas, "卓・レンジ前提", 10, 170);
+            var grp2 = MakeGroup(canvas, "ハンド・ボード", 190, 145);
+            var grp3 = MakeGroup(canvas, "ベット情報", 345, 145);
+            var grp4 = MakeGroup(canvas, "用語ガイド", 500, 110);
 
             int x1 = 15;
             int y = 28;
@@ -225,6 +285,13 @@ namespace NLHETheoryAdvisor
             _cbHeroPos.SelectedIndexChanged += delegate(object s, EventArgs e) { RefreshPositionHint(); };
             _cbVillainPos.SelectedIndexChanged += delegate(object s, EventArgs e) { RefreshPositionHint(); };
             _cbScenario.SelectedIndexChanged += delegate(object s, EventArgs e) { SyncScenarioToStreet(); };
+
+            Action updateScroll = delegate()
+            {
+                canvas.AutoScrollMinSize = new Size(0, grp4.Bottom + 20);
+            };
+            canvas.Resize += delegate(object s, EventArgs e) { updateScroll(); };
+            updateScroll();
         }
 
         private void BuildResultPage(TabPage page)
@@ -419,6 +486,7 @@ namespace NLHETheoryAdvisor
             _gridPfMatrix.DefaultCellStyle.Font = new Font("Consolas", 7f, FontStyle.Bold);
             _gridPfMatrix.RowHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
             _gridPfMatrix.MouseEnter += delegate(object s, EventArgs e) { _gridPfMatrix.Focus(); };
+            _gridPfMatrix.MouseWheel += OnPreflopMatrixMouseWheel;
             _gridPfMatrix.CellClick += OnPreflopMatrixCellClick;
             _gridPfMatrix.CellFormatting += OnPreflopMatrixCellFormatting;
             BuildPreflopMatrix();
@@ -727,6 +795,24 @@ namespace NLHETheoryAdvisor
             for (int i = 0; i < _gridPfMatrix.Rows.Count; i++)
             {
                 _gridPfMatrix.Rows[i].Height = 28;
+            }
+        }
+
+        private void OnPreflopMatrixMouseWheel(object sender, MouseEventArgs e)
+        {
+            if (_gridPfMatrix == null || _gridPfMatrix.RowCount == 0)
+            {
+                return;
+            }
+
+            int current = _gridPfMatrix.FirstDisplayedScrollingRowIndex;
+            int notches = Math.Max(1, Math.Abs(e.Delta) / 120);
+            int offset = e.Delta > 0 ? -notches : notches;
+            int next = Math.Max(0, Math.Min(_gridPfMatrix.RowCount - 1, current + offset));
+
+            if (next != current)
+            {
+                _gridPfMatrix.FirstDisplayedScrollingRowIndex = next;
             }
         }
 
@@ -1111,20 +1197,20 @@ namespace NLHETheoryAdvisor
             _rtbLog.ScrollToCaret();
         }
 
-        private static GroupBox MakeGroup(TabPage page, string text, int y, int height)
+        private static GroupBox MakeGroup(Control page, string text, int y, int height)
         {
             var grp = new GroupBox
             {
                 Text = text,
                 Location = new Point(10, y),
                 Height = height,
-                Width = page.Width - 20,
+                Width = page.ClientSize.Width - 20,
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
                 Parent = page
             };
             page.Resize += delegate(object s, EventArgs e)
             {
-                grp.Width = page.Width - 20;
+                grp.Width = page.ClientSize.Width - 20;
             };
             return grp;
         }
