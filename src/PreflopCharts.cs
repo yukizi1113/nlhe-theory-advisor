@@ -261,6 +261,7 @@ namespace NLHETheoryAdvisor
             ThreeBetRanges["CO|BB"] = new RangeDefinition("3Bet BB vs CO", "AA-JJ, 44-22, AKo, AKs-AQs, A5s-A4s, K9s, Q9s, T8s, 97s, 87s-86s, 76s-75s, 65s-64s, 54s");
             ThreeBetRanges["BTN|SB"] = new RangeDefinition("3Bet SB vs BTN", "AA-TT, 55-33, AKo-ATo, KQo-KJo, AKs-ATs, A7s-A2s, KQs-KJs, K8s-K4s, Q9s-Q8s, J9s-J8s, T8s, 98s-97s, 87s-86s, 76s-75s, 65s-64s, 54s");
             ThreeBetRanges["BTN|BB"] = new RangeDefinition("3Bet BB vs BTN", "AA-TT, 22, AKo-ATo, KQo-KJo, AKs-A9s, KQs-KJs, K4s-K2s, Q6s-Q2s, J7s-J6s, T7s, 98s-96s, 87s-85s, 76s-75s, 65s-64s, 54s-53s, 43s");
+            ThreeBetRanges["SB|BB"] = new RangeDefinition("3Bet BB vs SB", "AA-TT, AKo-A9o, KQo-KTo, QJo, AKs-A2s, KQs-K6s, QJs-Q8s, JTs-J7s, T9s-T7s, 98s-97s, 87s-86s, 76s-75s, 65s-64s, 54s");
 
             FacingThreeBetRanges["UTG|IP"] = new FacingThreeBetRange(
                 "UTG vs IP 3Bet",
@@ -484,6 +485,13 @@ namespace NLHETheoryAdvisor
                 else if (threeBettor == Position.BB)
                 {
                     key = "BTN|BB";
+                }
+            }
+            else if (opener == Position.SB)
+            {
+                if (threeBettor == Position.BB)
+                {
+                    key = "SB|BB";
                 }
             }
 

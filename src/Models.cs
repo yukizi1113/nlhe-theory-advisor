@@ -488,14 +488,14 @@ namespace NLHETheoryAdvisor
 
         public static bool IsIpAgainstOpen(Position actor, Position opener)
         {
+            if (opener == Position.SB && actor == Position.BB)
+            {
+                return true;
+            }
+
             if (actor == Position.SB || actor == Position.BB)
             {
                 return false;
-            }
-
-            if (opener == Position.SB)
-            {
-                return actor == Position.BB;
             }
 
             return GetOrder(actor) > GetOrder(opener);
