@@ -23,7 +23,7 @@ namespace NLHETheoryAdvisor
             sb.AppendLine();
             sb.AppendLine("3. フロップ IP");
             sb.AppendLine("防衛頻度は bet size 依存で、60〜70% は多くの board の近似にすぎない。");
-            sb.AppendLine("乾いた board では低め、dynamic board や position が強い spot では広めに守りやすい。");
+            sb.AppendLine("board texture は主に、どの hand を continue / raise に回すかの配分を左右する。");
             sb.AppendLine("乾いたボードでは超強ハンドをコール止めして turn / river で raise を遅らせる。");
             sb.AppendLine("ウェットなボードでは strong but vulnerable hand を今の street で raise して保護する。");
             sb.AppendLine();
@@ -46,8 +46,8 @@ namespace NLHETheoryAdvisor
             sb.AppendLine();
             sb.AppendLine("7. River");
             sb.AppendLine("river は equity が EV に最も直結する。");
-            sb.AppendLine("IP の thin value は call されたとき 50% 超が出発点だが、");
-            sb.AppendLine("実戦では raise の可能性と bet/check の比較 EV まで見る。");
+            sb.AppendLine("IP の thin value は、call されたときの勝率だけでなく、");
+            sb.AppendLine("相手の fold 率・raise 率・check 時 EV との比較で判断する。");
             sb.AppendLine("removal effect は river bluff の中心概念で、");
             sb.AppendLine("call range を block し fold range を unblock するハンドから bluff する。");
             sb.AppendLine("missed draw が少ないときは弱い made hand を bluff 候補にできるが、");
