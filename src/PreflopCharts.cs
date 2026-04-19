@@ -382,6 +382,21 @@ namespace NLHETheoryAdvisor
                     ? string.Empty
                     : string.Format("{0}\r\n4bet: {1}", defendRange.FlatRange.RangeText, defendRange.FourBetRange.RangeText);
 
+                if (defendRange == null)
+                {
+                    result.Action = "未対応スポット";
+                    result.Notes.Add("Facing 3-Bet は Hero がオープンし、Villain が 3 ベットした前提の主要スポットのみ対応しています。");
+                    if (hero == Position.BB)
+                    {
+                        result.Notes.Add("BB は通常 opener にならないため、この設定は成立しません。例: BTN open に BB が 3bet したなら Hero=BTN / Villain=BB / Facing 3-Bet で見てください。");
+                    }
+                    else
+                    {
+                        result.Notes.Add("この位置の組み合わせに対する facing 3bet 防衛レンジは未実装です。");
+                    }
+                    return result;
+                }
+
                 bool canFlat = defendRange != null && defendRange.FlatRange.Contains(normalizedHand);
                 bool canFourBet = defendRange != null && defendRange.FourBetRange.Contains(normalizedHand);
                 bool mixed = (defendRange != null && defendRange.FlatRange.IsMixed(normalizedHand))
